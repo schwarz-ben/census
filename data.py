@@ -1,7 +1,7 @@
 import os.path
 import pandas as pd
 
-DEFAULT_DATA_PATH = os.path.join("..","CensusIncome")
+DEFAULT_DATA_PATH = os.path.join(".","CensusIncome")
 DEFAULT_DS_TRAIN_NAME = "adult.data"
 DEFAULT_DS_TEST_NAME = "adult.test"
 
@@ -57,7 +57,7 @@ def load_data(which=None,path=os.path.join( DEFAULT_DATA_PATH,DEFAULT_DS_TRAIN_N
         lst = [df_train,df_test]
 
     df = pd.concat([df_train,df_test])
-
+    df.index = range(len(df.index))
     if which == "combined":
         return [df]
     elif which == "all":
@@ -67,12 +67,35 @@ def load_data(which=None,path=os.path.join( DEFAULT_DATA_PATH,DEFAULT_DS_TRAIN_N
 
 
 
+def categorical_binner(rebinning_dictionnary,singletonToOther=False,labelOther="Other"):
+    """ returns a function for rebinning a categorical variable
+
+    :param dict rebinning_dictionnary: the dictionnary that will be used to map old labels to new ones
+    :param boolean singletonToOther: (optional) if set to False (default) labels not found in the dictionnary
+        are kept as is in the new categorical variable. If set to True, labels not found in the dictionnary
+        are placed in a common "Other" category
+    :param str labelOther: (optional) the label for the category "Other" if singletonToOther is set to True.
+        Defaults to "Other".
+
+    """
+    def binner(x):
+        try:
+            return rebinning_dictionnary[x]
+        except KeyError:
+            return labelOther if singletonToOther else x
+    return binner
+
+
+
+
 def test_load():
     df_list = load_data()
     print("read",len(df_list),"DataFrames")
     for i,df in enumerate(df_list):
         print(" i:",df.shape)
 
+    assert len(df_list[0].index.unique()) == len(df_list[0]),\
+        "index of combined dataframe has redundant keys"
 
 if __name__ == "__main__":
     test_load()
